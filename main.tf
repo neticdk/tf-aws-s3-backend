@@ -80,6 +80,12 @@ data "aws_iam_policy_document" "terraform_state" {
       "s3:ListBucket"
     ]
 
+    principals {
+      type = "AWS"
+
+      identifiers = [var.operator_role_arn]
+    }
+
     resources = [join("", aws_s3_bucket.terraform_state.*.arn)]
   }
 

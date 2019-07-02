@@ -63,6 +63,10 @@ resource "aws_s3_bucket" "terraform_state" {
     }
   }
 
+  logging {
+    target_bucket = var.bucket_logging_target_bucket
+  }
+
   tags = merge(var.tags, local.tags)
 
   lifecycle {

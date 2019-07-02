@@ -44,7 +44,7 @@ variable "bucket_lifecycle_expiration_days" {
 
 variable "bucket_logging" {
   description = "Target bucket to use for logging"
-  type        = list(map)
+  type        = list(map(any))
   default     = []
 }
 

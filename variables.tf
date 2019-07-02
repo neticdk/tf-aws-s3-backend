@@ -42,10 +42,10 @@ variable "bucket_lifecycle_expiration_days" {
   default     = 90
 }
 
-variable "bucket_logging_target_bucket" {
+variable "bucket_logging" {
   description = "Target bucket to use for logging"
-  type        = string
-  default     = null
+  type        = list(map)
+  default     = []
 }
 
 variable "dynamodb_table" {

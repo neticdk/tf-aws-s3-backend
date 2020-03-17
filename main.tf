@@ -26,12 +26,23 @@ resource "aws_kms_key" "tf_enc_key" {
   }
 }
 
+resource "random_id" "kms" {
+  count = var.bootstrap
+
+  keepers = {
+    key_id = "${aws_kms_key.tf_enc_key[count.index].key_id}"
+    arn    = "${aws_kms_key.tf_enc_key[count.index].arn}"
+  }
+
+  byte_length = 8
+}
+
 // KMW Key alias
 resource "aws_kms_alias" "tf_enc_key" {
   count = var.bootstrap
 
-  name          = "alias/terraform-state"
-  target_key_id = aws_kms_key.tf_enc_key[count.index].key_id
+  name          = "alias/tf-state-${random_id.kms}"
+  target_key_id = random_id.kms[count.index].key_id
 }
 
 // S3 Bucket
@@ -57,7 +68,7 @@ resource "aws_s3_bucket" "terraform_state" {
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
-        kms_master_key_id = aws_kms_key.tf_enc_key[count.index].arn
+        kms_master_key_id = random_id.kms[count.index].arn
         sse_algorithm     = "aws:kms"
       }
     }

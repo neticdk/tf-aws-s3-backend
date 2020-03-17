@@ -42,7 +42,7 @@ resource "aws_kms_alias" "tf_enc_key" {
   count = var.bootstrap
 
   name          = "alias/tf-state-${random_id.kms[count.index].dec}"
-  target_key_id = random_id.kms[count.index].key_id
+  target_key_id = random_id.kms[count.index].keepers.key_id
 }
 
 // S3 Bucket
@@ -68,7 +68,7 @@ resource "aws_s3_bucket" "terraform_state" {
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
-        kms_master_key_id = random_id.kms[count.index].arn
+        kms_master_key_id = random_id.kms[count.index].keepers.arn
         sse_algorithm     = "aws:kms"
       }
     }

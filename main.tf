@@ -41,7 +41,7 @@ resource "random_id" "kms" {
 resource "aws_kms_alias" "tf_enc_key" {
   count = var.bootstrap
 
-  name          = "alias/tf-state-${random_id.kms.dec}"
+  name          = "alias/tf-state-${random_id.kms[count.index].dec}"
   target_key_id = random_id.kms[count.index].key_id
 }
 

@@ -52,10 +52,6 @@ resource "aws_s3_bucket" "terraform_state" {
   bucket = var.bucket
   acl    = "private"
 
-  versioning {
-    enabled = var.bucket_versioning_enabled
-  }
-
   lifecycle_rule {
     id      = "expire"
     enabled = var.bucket_lifecycle_enabled
@@ -64,15 +60,6 @@ resource "aws_s3_bucket" "terraform_state" {
       days = var.bucket_lifecycle_expiration_days
     }
   }
-
-  //server_side_encryption_configuration {
-    //rule {
-      //apply_server_side_encryption_by_default {
-        //kms_master_key_id = random_id.kms[count.index].keepers.arn
-        //sse_algorithm     = "aws:kms"
-      //}
-    //}
-  //}
 
   dynamic "logging" {
     for_each = var.bucket_logging
@@ -157,7 +144,7 @@ resource "aws_dynamodb_table" "terraform_statelock" {
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "s3serverside" {
+resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
     bucket = aws_s3_bucket
     rule {
       apply_server_side_encryption_by_default {
@@ -165,4 +152,11 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3serverside" {
         sse_algorithm     = "aws:kms"
       }
     }
+}
+
+resource "aws_s3_bucket_versioning" "terraform_state" {
+  bucket = aws_s3_bucket
+  versioning_configuration {
+    status = var.bucket_versioning_enabled
+  }
 }

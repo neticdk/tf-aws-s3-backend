@@ -65,14 +65,14 @@ resource "aws_s3_bucket" "terraform_state" {
     }
   }
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        kms_master_key_id = random_id.kms[count.index].keepers.arn
-        sse_algorithm     = "aws:kms"
-      }
-    }
-  }
+  //server_side_encryption_configuration {
+    //rule {
+      //apply_server_side_encryption_by_default {
+        //kms_master_key_id = random_id.kms[count.index].keepers.arn
+        //sse_algorithm     = "aws:kms"
+      //}
+    //}
+  //}
 
   dynamic "logging" {
     for_each = var.bucket_logging
@@ -155,4 +155,14 @@ resource "aws_dynamodb_table" "terraform_statelock" {
   lifecycle {
     prevent_destroy = true
   }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "s3serverside" {
+    bucket = aws_s3_bucket
+    rule {
+      apply_server_side_encryption_by_default {
+        kms_master_key_id = random_id.kms[count.index].keepers.arn
+        sse_algorithm     = "aws:kms"
+      }
+    }
 }

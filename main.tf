@@ -145,7 +145,8 @@ resource "aws_dynamodb_table" "terraform_statelock" {
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
-    bucket = aws_s3_bucket
+    count = var.bootstrap
+    bucket = aws_s3_bucket.terraform_state.bucket
     rule {
       apply_server_side_encryption_by_default {
         kms_master_key_id = random_id.kms[count.index].keepers.arn
@@ -155,7 +156,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" 
 }
 
 resource "aws_s3_bucket_versioning" "terraform_state" {
-  bucket = aws_s3_bucket
+  bucket = aws_s3_bucket.terraform_state.bucket
   versioning_configuration {
     status = var.bucket_versioning_enabled
   }

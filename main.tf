@@ -50,7 +50,7 @@ resource "aws_s3_bucket" "terraform_state" {
   count = var.bootstrap
 
   bucket = var.bucket
-  acl    = "private"
+  #acl    = "private"
 
   dynamic "logging" {
     for_each = var.bucket_logging
@@ -163,4 +163,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "terraform_state" {
       noncurrent_days = var.bucket_lifecycle_expiration_days
     }
   }
+}
+
+resource "aws_s3_bucket_acl" "terraform_state" {
+  bucket = var.bucket
+  acl    = "private"
 }

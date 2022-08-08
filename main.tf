@@ -52,15 +52,6 @@ resource "aws_s3_bucket" "terraform_state" {
   bucket = var.bucket
   acl    = "private"
 
-  lifecycle_rule {
-    id      = "expire"
-    enabled = var.bucket_lifecycle_enabled
-
-    noncurrent_version_expiration {
-      days = var.bucket_lifecycle_expiration_days
-    }
-  }
-
   dynamic "logging" {
     for_each = var.bucket_logging
     content {
@@ -73,7 +64,7 @@ resource "aws_s3_bucket" "terraform_state" {
   lifecycle {
     prevent_destroy = true
   }
-}
+} 
 
 // S3 Bucket Policy
 data "aws_iam_policy_document" "terraform_state" {
@@ -159,5 +150,17 @@ resource "aws_s3_bucket_versioning" "terraform_state" {
   bucket = var.bucket
   versioning_configuration {
     status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "terraform_state" {
+  bucket = var.bucket
+  rule {
+    id = "expire"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      days = var.bucket_lifecycle_expiration_days
+    }
   }
 }

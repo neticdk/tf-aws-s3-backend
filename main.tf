@@ -30,8 +30,8 @@ resource "random_id" "kms" {
   count = var.bootstrap
 
   keepers = {
-    key_id = "${aws_kms_key.tf_enc_key[count.index].key_id}"
-    arn    = "${aws_kms_key.tf_enc_key[count.index].arn}"
+    key_id = "aws_kms_key.tf_enc_key[count.index].key_id"
+    arn    = "aws_kms_key.tf_enc_key[count.index].arn"
   }
 
   byte_length = 8

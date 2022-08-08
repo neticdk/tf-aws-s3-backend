@@ -158,6 +158,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" 
 resource "aws_s3_bucket_versioning" "terraform_state" {
   bucket = var.bucket
   versioning_configuration {
-    status = var.bucket_versioning_enabled
+    status = Enabled
   }
 }

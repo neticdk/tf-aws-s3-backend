@@ -52,12 +52,12 @@ resource "aws_s3_bucket" "terraform_state" {
   bucket = var.bucket
   acl    = "private"
 
-  dynamic "logging" {
-    for_each = var.bucket_logging
-    content {
-      target_bucket = logging.value.target_bucket
-    }
-  }
+  #dynamic "logging" {
+  #  for_each = var.bucket_logging
+  #  content {
+  #    target_bucket = logging.value.target_bucket
+  #  }
+  #}
 
   tags = merge(var.tags, local.tags)
 
@@ -163,4 +163,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "terraform_state" {
       days = var.bucket_lifecycle_expiration_days
     }
   }
+}
+
+resource "aws_s3_bucket_logging" "terraform_state" {
+  for_each = var.bucket_logging
+  target_bucket = logging.value.target_bucket
+  target_prefix = ""
 }

@@ -51,12 +51,12 @@ resource "aws_s3_bucket" "terraform_state" {
 
   bucket = var.bucket
 
-  dynamic "logging" {
-    for_each = var.bucket_logging
-    content {
-      target_bucket = logging.value.target_bucket
-    }
-  }
+#  dynamic "logging" {
+#    for_each = var.bucket_logging
+#    content {
+#      target_bucket = logging.value.target_bucket
+#    }
+#  }
 
   tags = merge(var.tags, local.tags)
 
@@ -173,6 +173,6 @@ resource "aws_s3_bucket_logging" "terraform_state" {
   for_each = var.bucket_logging
   
   bucket = var.bucket
-  target_bucket = logging.value.target_bucket
-  target_prefix = "/"
+  target_bucket = each.value.target_bucket
+  target_prefix = ""
 }

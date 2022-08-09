@@ -50,7 +50,6 @@ resource "aws_s3_bucket" "terraform_state" {
   count = var.bootstrap
 
   bucket = var.bucket
-  #acl    = "private"
 
   dynamic "logging" {
     for_each = var.bucket_logging
@@ -168,4 +167,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "terraform_state" {
 resource "aws_s3_bucket_acl" "terraform_state" {
   bucket = var.bucket
   acl    = "private"
+}
+
+resource "aws_s3_bucket_logging" "terraform_state" {
+  for_each = var.bucket_logging
+    content {
+      target_bucket = logging.value.target_bucket
+      target_prefix = "/"
+    }
 }

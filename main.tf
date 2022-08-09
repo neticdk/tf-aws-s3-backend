@@ -171,8 +171,8 @@ resource "aws_s3_bucket_acl" "terraform_state" {
 
 resource "aws_s3_bucket_logging" "terraform_state" {
   for_each = var.bucket_logging
-    content {
-      target_bucket = logging.value.target_bucket
-      target_prefix = "/"
-    }
+  
+  bucket = var.bucket
+  target_bucket = logging.value.target_bucket
+  target_prefix = "/"
 }

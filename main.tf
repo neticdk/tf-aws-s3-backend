@@ -170,7 +170,7 @@ resource "aws_s3_bucket_acl" "terraform_state" {
 }
 
 resource "aws_s3_bucket_logging" "terraform_state" {
-  for_each = var.bucket_logging
+  for_each = toset(var.bucket_logging)
   
   bucket = var.bucket
   target_bucket = each.value.target_bucket

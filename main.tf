@@ -30,8 +30,8 @@ resource "random_id" "kms" {
   count = var.bootstrap
 
   keepers = {
-    key_id = "${aws_kms_key.tf_enc_key[count.index].key_id}"
-    arn    = "${aws_kms_key.tf_enc_key[count.index].arn}"
+    key_id = "aws_kms_key.tf_enc_key[count.index].key_id"
+    arn    = "aws_kms_key.tf_enc_key[count.index].arn"
   }
 
   byte_length = 8
@@ -50,43 +50,20 @@ resource "aws_s3_bucket" "terraform_state" {
   count = var.bootstrap
 
   bucket = var.bucket
-  acl    = "private"
 
-  versioning {
-    enabled = var.bucket_versioning_enabled
-  }
-
-  lifecycle_rule {
-    id      = "expire"
-    enabled = var.bucket_lifecycle_enabled
-
-    noncurrent_version_expiration {
-      days = var.bucket_lifecycle_expiration_days
-    }
-  }
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        kms_master_key_id = random_id.kms[count.index].keepers.arn
-        sse_algorithm     = "aws:kms"
-      }
-    }
-  }
-
-  dynamic "logging" {
-    for_each = var.bucket_logging
-    content {
-      target_bucket = logging.value.target_bucket
-    }
-  }
+#  dynamic "logging" {
+#    for_each = var.bucket_logging
+#    content {
+#      target_bucket = logging.value.target_bucket
+#    }
+#  }
 
   tags = merge(var.tags, local.tags)
 
   lifecycle {
     prevent_destroy = true
   }
-}
+} 
 
 // S3 Bucket Policy
 data "aws_iam_policy_document" "terraform_state" {
@@ -155,4 +132,47 @@ resource "aws_dynamodb_table" "terraform_statelock" {
   lifecycle {
     prevent_destroy = true
   }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
+    count = var.bootstrap
+    bucket = var.bucket
+    rule {
+      apply_server_side_encryption_by_default {
+        kms_master_key_id = random_id.kms[count.index].keepers.arn
+        sse_algorithm     = "aws:kms"
+      }
+    }
+}
+
+resource "aws_s3_bucket_versioning" "terraform_state" {
+  bucket = var.bucket
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "terraform_state" {
+  bucket = var.bucket
+  rule {
+    id = "expire"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      noncurrent_days = var.bucket_lifecycle_expiration_days
+    }
+  }
+}
+
+resource "aws_s3_bucket_acl" "terraform_state" {
+  bucket = var.bucket
+  acl    = "private"
+}
+
+resource "aws_s3_bucket_logging" "terraform_state" {
+  for_each = toset(var.bucket_logging)
+  
+  bucket = var.bucket
+  target_bucket = each.value.target_bucket
+  target_prefix = ""
 }

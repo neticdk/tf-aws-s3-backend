@@ -68,7 +68,7 @@ resource "aws_s3_bucket_logging" "terraform_state" {
 resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
   count = var.bootstrap
 
-  bucket = aws_s3_bucket.terraform_state.id
+  bucket = aws_s3_bucket.terraform_state[count.index].id
   rule {
     apply_server_side_encryption_by_default {
       kms_master_key_id = random_id.kms[count.index].keepers.arn
@@ -80,7 +80,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" 
 resource "aws_s3_bucket_versioning" "terraform_state" {
   count = var.bootstrap
 
-  bucket = aws_s3_bucket.terraform_state.id
+  bucket = aws_s3_bucket.terraform_state[count.index].id
   versioning_configuration {
     status = var.bucket_lifecycle_enabled ? "Enabled" : "Disabled"
   }
@@ -89,13 +89,13 @@ resource "aws_s3_bucket_versioning" "terraform_state" {
 resource "aws_s3_bucket_acl" "terraform_state" {
   count = var.bootstrap
 
-  bucket = aws_s3_bucket.terraform_state.id
+  bucket = aws_s3_bucket.terraform_state[count.index].id
   acl    = "private"
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "terraform_state" {
   count = var.bootstrap
-  bucket = aws_s3_bucket.terraform_state.id
+  bucket = aws_s3_bucket.terraform_state[count.index].id
 
   rule {
     id = "expired"

@@ -59,7 +59,7 @@ resource "aws_s3_bucket" "terraform_state" {
 }
 
 resource "aws_s3_bucket_logging" "terraform_state" {
-  for_each = var.bootstrap > 0 ? {for i, v in var.bucket_logging: i => v} : []
+  for_each = var.bootstrap > 0 ? {for i, v in var.bucket_logging: i => v} : {}
 
   bucket = aws_s3_bucket.terraform_state[0].id
   target_bucket = each.value.target_bucket

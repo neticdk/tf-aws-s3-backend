@@ -30,8 +30,8 @@ resource "random_id" "kms" {
   count = var.bootstrap
 
   keepers = {
-    key_id = "${aws_kms_key.tf_enc_key[count.index].key_id}"
-    arn    = "${aws_kms_key.tf_enc_key[count.index].arn}"
+    key_id = aws_kms_key.tf_enc_key[count.index].key_id
+    arn    = aws_kms_key.tf_enc_key[count.index].arn
   }
 
   byte_length = 8
@@ -50,36 +50,6 @@ resource "aws_s3_bucket" "terraform_state" {
   count = var.bootstrap
 
   bucket = var.bucket
-  acl    = "private"
-
-  versioning {
-    enabled = var.bucket_versioning_enabled
-  }
-
-  lifecycle_rule {
-    id      = "expire"
-    enabled = var.bucket_lifecycle_enabled
-
-    noncurrent_version_expiration {
-      days = var.bucket_lifecycle_expiration_days
-    }
-  }
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        kms_master_key_id = random_id.kms[count.index].keepers.arn
-        sse_algorithm     = "aws:kms"
-      }
-    }
-  }
-
-  dynamic "logging" {
-    for_each = var.bucket_logging
-    content {
-      target_bucket = logging.value.target_bucket
-    }
-  }
 
   tags = merge(var.tags, local.tags)
 
@@ -87,6 +57,57 @@ resource "aws_s3_bucket" "terraform_state" {
     prevent_destroy = true
   }
 }
+
+resource "aws_s3_bucket_logging" "terraform_state" {
+  for_each = var.bucket_logging
+
+  bucket = aws_s3_bucket.terraform_state.id
+  target_bucket = each.value.target_bucket
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
+  count = var.bootstrap
+
+  bucket = aws_s3_bucket.terraform_state.id
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = random_id.kms[count.index].keepers.arn
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
+resource "aws_s3_bucket_versioning" "terraform_state" {
+  count = var.bootstrap
+
+  bucket = aws_s3_bucket.terraform_state.id
+  versioning_configuration {
+    status = var.bucket_lifecycle_enabled ? "Enabled" : "Disabled"
+  }
+}
+
+resource "aws_s3_bucket_acl" "terraform_state" {
+  count = var.bootstrap
+
+  bucket = aws_s3_bucket.terraform_state.id
+  acl    = "private"
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "terraform_state" {
+  count = var.bootstrap
+  bucket = aws_s3_bucket.terraform_state.id
+
+  rule {
+    id = "expired"
+    status = var.bucket_lifecycle_enabled ? "Enabled" : "Disabled"
+    noncurrent_version_expiration {
+      noncurrent_days = var.bucket_lifecycle_expiration_days
+    }
+  }
+}
+
+
+
 
 // S3 Bucket Policy
 data "aws_iam_policy_document" "terraform_state" {
@@ -104,7 +125,7 @@ data "aws_iam_policy_document" "terraform_state" {
       identifiers = [var.operator_role_arn]
     }
 
-    resources = [join("", aws_s3_bucket.terraform_state.*.arn)]
+    resources = [join("", aws_s3_bucket.terraform_state[*].arn)]
   }
 
   statement {
@@ -123,8 +144,8 @@ data "aws_iam_policy_document" "terraform_state" {
     }
 
     resources = [
-      "${join("", aws_s3_bucket.terraform_state.*.arn)}/${var.key}",
-      "${join("", aws_s3_bucket.terraform_state.*.arn)}/env:/*/${var.key}",
+      "${join("", aws_s3_bucket.terraform_state[*].arn)}/${var.key}",
+      "${join("", aws_s3_bucket.terraform_state[*].arn)}/env:/*/${var.key}",
     ]
   }
 }

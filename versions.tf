@@ -6,9 +6,16 @@
  */
 
 terraform {
-  required_version = ">= 0.14"
+  required_version = ">= 1.0"
+
   required_providers {
-    aws      = ">= 4.0"
-    random   = ">= 3.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 4.9"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.0"
+    }
   }
 }

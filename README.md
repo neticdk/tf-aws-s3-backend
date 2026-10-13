@@ -2,7 +2,7 @@
 
 ## Supported Terraform Versions
 
-Terraform 0.12
+Terraform >= 1.0 (tested with 1.15)
 
 ## Usage
 
@@ -13,31 +13,51 @@ module "tf_s3_backend" {
   bootstrap         = 1
   operator_role_arn = "arn:aws:iam::123456789012:role/operator-role"
   bucket            = "my-terraform-backend-bucket"
-  dynamodb_table    = "my-terraform-dynamodb-lock-table"
   key               = "terraform.tfstate"
 }
 ```
+
+## State Locking
+
+Terraform >= 1.10 supports S3 native state locking, and DynamoDB based locking
+is deprecated. The bucket policy grants the operator role access to the
+`<key>.tflock` lock file, so configure the backend with `use_lockfile`:
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket       = "my-terraform-backend-bucket"
+    key          = "terraform.tfstate"
+    region       = "eu-west-1"
+    encrypt      = true
+    use_lockfile = true
+  }
+}
+```
+
+To keep using (or migrate away from) DynamoDB locking, set `dynamodb_table`
+and the lock table is created as before.
 
 <!---BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK--->
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|:----:|:-----:|:-----:|
-| bootstrap | Whether to initialize the backend or not | string | `"0"` | no |
-| bucket | Name of S3 bucket | string | n/a | yes |
-| bucket\_lifecycle\_enabled | Enable/disable bucket lifecycle | string | `"true"` | no |
-| bucket\_lifecycle\_expiration\_days | Days to keep noncurrent versions before expiration | string | `"90"` | no |
-| bucket\_versioning\_enabled | Enable/disable bucket versioning | string | `"true"` | no |
-| dynamodb\_table | Name of DynamoDB table | string | n/a | yes |
-| key | Name of S3 key | string | n/a | yes |
-| operator\_role\_arn | ARN of role to use for running terraform | string | n/a | yes |
-| tags | A map of tags to add to all resources | map | `<map>` | no |
+|------|-------------|------|---------|:--------:|
+| bootstrap | Whether to initialize the backend or not | `number` | `0` | no |
+| bucket | Name of S3 bucket | `string` | n/a | yes |
+| bucket\_lifecycle\_enabled | Enable/disable bucket lifecycle | `bool` | `true` | no |
+| bucket\_lifecycle\_expiration\_days | Days to keep noncurrent versions before expiration | `number` | `90` | no |
+| bucket\_logging | Target bucket to use for logging | `list(map(any))` | `[]` | no |
+| dynamodb\_table | Name of DynamoDB table used for state locking. Set to null to rely on S3 native locking (use\_lockfile) only | `string` | `null` | no |
+| key | Name of S3 key | `string` | n/a | yes |
+| operator\_role\_arn | ARN of role to use for running terraform | `string` | n/a | yes |
+| tags | A map of tags to add to all resources | `map(string)` | `{}` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| operator\_role\_arn |  |
+| operator\_role\_arn | n/a |
 
 <!---END OF PRE-COMMIT-TERRAFORM DOCS HOOK--->
 

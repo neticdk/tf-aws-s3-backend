@@ -2,7 +2,7 @@
 
 ## Supported Terraform Versions
 
-Terraform >= 1.0 (tested with 1.15)
+Terraform >= 1.15
 
 ## Usage
 

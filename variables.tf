@@ -7,7 +7,7 @@
 
 variable "tags" {
   description = "A map of tags to add to all resources"
-  type        = map
+  type        = map(string)
   default     = {}
 }
 
@@ -51,6 +51,7 @@ variable "bucket_logging" {
 }
 
 variable "dynamodb_table" {
-  description = "Name of DynamoDB table"
+  description = "Name of DynamoDB table used for state locking. Set to null to rely on S3 native locking (use_lockfile) only"
   type        = string
+  default     = null
 }

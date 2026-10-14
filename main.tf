@@ -59,9 +59,9 @@ resource "aws_s3_bucket" "terraform_state" {
 }
 
 resource "aws_s3_bucket_logging" "terraform_state" {
-  for_each = var.bootstrap > 0 ? {for i, v in var.bucket_logging: i => v} : {}
+  for_each = var.bootstrap > 0 ? { for i, v in var.bucket_logging : i => v } : {}
 
-  bucket = aws_s3_bucket.terraform_state[0].id
+  bucket        = aws_s3_bucket.terraform_state[0].id
   target_bucket = each.value.target_bucket
   target_prefix = "log/"
 }
@@ -83,23 +83,27 @@ resource "aws_s3_bucket_versioning" "terraform_state" {
 
   bucket = aws_s3_bucket.terraform_state[count.index].id
   versioning_configuration {
-    status = var.bucket_lifecycle_enabled ? "Enabled" : "Disabled"
+    status = var.bucket_lifecycle_enabled ? "Enabled" : "Suspended"
   }
 }
 
-resource "aws_s3_bucket_acl" "terraform_state" {
+// ACLs disabled, the bucket owner owns all objects
+resource "aws_s3_bucket_ownership_controls" "terraform_state" {
   count = var.bootstrap
 
   bucket = aws_s3_bucket.terraform_state[count.index].id
-  acl    = "private"
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "terraform_state" {
   count = var.bootstrap
+
   bucket = aws_s3_bucket.terraform_state[count.index].id
 
   rule {
-    id = "expired"
+    id     = "expired"
     status = var.bucket_lifecycle_enabled ? "Enabled" : "Disabled"
     noncurrent_version_expiration {
       noncurrent_days = var.bucket_lifecycle_expiration_days
@@ -107,13 +111,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "terraform_state" {
   }
 }
 
-
-
-
 // S3 Bucket Policy
 data "aws_iam_policy_document" "terraform_state" {
   statement {
-    sid = "TerraformStateListBucket"
+    sid    = "TerraformStateListBucket"
     effect = "Allow"
 
     actions = [
@@ -130,7 +131,7 @@ data "aws_iam_policy_document" "terraform_state" {
   }
 
   statement {
-    sid = "TerraformStateManageObjects"
+    sid    = "TerraformStateManageObjects"
     effect = "Allow"
 
     actions = [
@@ -149,6 +150,29 @@ data "aws_iam_policy_document" "terraform_state" {
       "${join("", aws_s3_bucket.terraform_state[*].arn)}/env:/*/${var.key}",
     ]
   }
+
+  // S3 native state locking (use_lockfile = true, Terraform >= 1.10)
+  statement {
+    sid    = "TerraformStateManageLockfiles"
+    effect = "Allow"
+
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+
+    principals {
+      type = "AWS"
+
+      identifiers = [var.operator_role_arn]
+    }
+
+    resources = [
+      "${join("", aws_s3_bucket.terraform_state[*].arn)}/${var.key}.tflock",
+      "${join("", aws_s3_bucket.terraform_state[*].arn)}/env:/*/${var.key}.tflock",
+    ]
+  }
 }
 
 resource "aws_s3_bucket_policy" "terraform_state" {
@@ -160,7 +184,7 @@ resource "aws_s3_bucket_policy" "terraform_state" {
 
 // DynamoDB
 resource "aws_dynamodb_table" "terraform_statelock" {
-  count = var.bootstrap
+  count = var.dynamodb_table != null ? var.bootstrap : 0
 
   name           = var.dynamodb_table
   read_capacity  = 1

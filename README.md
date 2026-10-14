@@ -2,13 +2,13 @@
 
 ## Supported Terraform Versions
 
-Terraform >= 1.15
+Terraform >= 1.15, AWS provider ~> 6.0
 
 ## Usage
 
 ```hcl
 module "tf_s3_backend" {
-  source = "github.com/neticdk/tf-aws-s3-backend"
+  source = "github.com/neticdk/tf-aws-s3-backend?ref=v2.0.0"
 
   bootstrap         = 1
   operator_role_arn = "arn:aws:iam::123456789012:role/operator-role"
